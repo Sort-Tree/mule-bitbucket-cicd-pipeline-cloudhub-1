@@ -1,0 +1,133 @@
+image: maven:3.6-jdk-8
+
+pipelines:
+
+  branches:
+    feature/*:
+      - step:
+          name: Deploy to DEV
+          deployment: DEV
+          caches:
+            - maven
+          script:
+            - bash maven-settings/config-maven.sh
+            - bash app-deploy-scripts/deploy-to-NonProd.sh DEV 1 $DEPLOYMENT_ACCESS_FLAG
+
+    epic/*:
+      - step:
+          script:
+            - echo "Default pipeline - no action taken"
+      - step:
+            name: Deploy to QA
+            trigger: manual
+            deployment: QA
+            caches:
+              - maven
+            script:
+              - bash maven-settings/config-maven.sh
+              - bash app-deploy-scripts/deploy-to-NonProd.sh QA 1 $DEPLOYMENT_ACCESS_FLAG
+
+
+
+    develop:
+      - step:
+          script:
+          - echo "Default pipeline - no action taken"
+      - step:
+            name: Deploy to QA
+            trigger: manual
+            deployment: QA
+            caches:
+              - maven
+            script:
+              - bash maven-settings/config-maven.sh
+              - bash app-deploy-scripts/deploy-to-NonProd.sh QA 1 $DEPLOYMENT_ACCESS_FLAG
+
+
+    release/*:
+      - step:
+           script:
+             - echo "Default pipeline - no action taken"
+      - step:
+         name: Deploy to UAT
+         deployment: UAT
+         trigger: manual
+         caches:
+           - maven
+         script:
+           - bash maven-settings/config-maven.sh
+           - bash app-deploy-scripts/deploy-to-NonProd.sh UAT 1 $DEPLOYMENT_ACCESS_FLAG
+
+
+      - step:
+         name: Deploy to PrePROD
+         deployment: PrePROD
+         trigger: manual
+         caches:
+           - maven
+         script:
+           - bash maven-settings/config-maven.sh
+           - bash app-deploy-scripts/deploy-to-NonProd.sh PrePROD 1 $DEPLOYMENT_ACCESS_FLAG
+
+      - step:
+          name: Deploy to PROD
+          deployment: PROD
+          trigger: manual
+          caches:
+            - maven
+          script:
+            - cd pipeline-permissions
+            - bash check-permission.sh
+            - cd -
+            - bash maven-settings/config-maven.sh
+            - bash app-deploy-scripts/deploy-to-PROD.sh $DEPLOYMENT_ACCESS_FLAG
+      
+      - step:
+         name: Deploy to HotFix
+         deployment: HotFix
+         trigger: manual
+         caches:
+           - maven
+         script:
+           - bash maven-settings/config-maven.sh
+           - bash app-deploy-scripts/deploy-to-NonProd.sh HotFix 1 $DEPLOYMENT_ACCESS_FLAG
+
+      - step:
+          name: Merge to master
+          trigger: manual
+          script:
+            - bash app-deploy-scripts/merge-to-master.sh           
+    
+    hotfix/*:
+      - step:
+           script:
+             - echo "Default pipeline - no action taken"
+
+      - step:
+         name: Deploy to HotFix
+         deployment: HotFix
+         trigger: manual
+         caches:
+           - maven
+         script:
+           - bash maven-settings/config-maven.sh
+           - bash app-deploy-scripts/deploy-to-NonProd.sh HotFix 1 $DEPLOYMENT_ACCESS_FLAG
+
+      - step:
+          name: Deploy to PROD
+          deployment: PROD
+          trigger: manual
+          caches:
+            - maven
+          script:
+            - cd pipeline-permissions
+            - bash check-permission.sh
+            - cd -
+            - bash maven-settings/config-maven.sh
+            - bash app-deploy-scripts/deploy-to-PROD.sh $DEPLOYMENT_ACCESS_FLAG
+
+      - step:
+          name: Merge to master
+          trigger: manual
+          script:
+            - bash app-deploy-scripts/merge-to-master.sh 
